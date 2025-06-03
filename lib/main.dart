@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:projek_uas_kel2/firebase_options.dart';
 import 'halaman_login.dart';
+import 'halaman_daftar.dart';
 
 void main() async{
 await Firebase.initializeApp(
@@ -23,7 +24,7 @@ class MyApp extends StatelessWidget {
         
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: HalamanLogin(),
+      home: HalamanDaftar(),
     );
   }
 }
