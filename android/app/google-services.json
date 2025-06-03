@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "897224526421",
+    "project_id": "uaskelompok2-d6407",
+    "storage_bucket": "uaskelompok2-d6407.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:897224526421:android:a2bccffa94e5914ee722dc",
+        "android_client_info": {
+          "package_name": "com.example.projek_uas_kel2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYj_hpfed-QHURcXcx7R2rQAak6ofRDzc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
