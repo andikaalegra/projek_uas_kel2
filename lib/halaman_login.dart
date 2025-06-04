@@ -1,96 +1,122 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dashboard_nasabah.dart';
+import 'halaman_daftar.dart';
 
 class HalamanLogin extends StatefulWidget {
+  const HalamanLogin({Key? key}) : super(key: key);
+
   @override
   _HalamanLoginState createState() => _HalamanLoginState();
 }
 
 class _HalamanLoginState extends State<HalamanLogin> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  bool _isObscure = true;
-  String? _errorMessage;
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  void _login() {
-    String username = _usernameController.text.trim();
-    String password = _passwordController.text;
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
 
-    if (username == 'admin' && password == '123456') {
-      setState(() {
-        _errorMessage = null;
-      });
-      // Arahkan ke halaman beranda atau dashboard setelah login sukses
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login berhasil!')),
+    setState(() => _isLoading = true);
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
-    } else {
-      setState(() {
-        _errorMessage = 'Username atau password salah';
-      });
+      
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardNasabah()),
+      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? 'Login gagal')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[50],
-      body: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(24),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Form(
+          key: _formKey,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.lock_outline, size: 80, color: Colors.blue),
-              SizedBox(height: 20),
-              Text(
-                'Login Admin',
+              // Logo Bank Sampah
+              const Text(
+                'BANK SAMPAH',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 30),
-              TextField(
-                controller: _usernameController,
+              const SizedBox(height: 30),
+              
+              // Email/Username
+              TextFormField(
+                controller: _emailController,
                 decoration: InputDecoration(
-                  labelText: 'Username',
+                  labelText: 'Email/Username',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
                 ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Harap masukkan email/username';
+                  }
+                  return null;
+                },
               ),
-              SizedBox(height: 20),
-              TextField(
+              const SizedBox(height: 20),
+              
+              // Password
+              TextFormField(
                 controller: _passwordController,
-                obscureText: _isObscure,
+                obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Password',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isObscure ? Icons.visibility : Icons.visibility_off,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isObscure = !_isObscure;
-                      });
-                    },
-                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Harap masukkan password';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 30),
+              
+              // Tombol Login
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _login,
+                  child: _isLoading 
+                      ? CircularProgressIndicator(color: Colors.white)
+                      : Text('Login'),
                 ),
               ),
-              SizedBox(height: 20),
-              if (_errorMessage != null)
-                Text(
-                  _errorMessage!,
-                  style: TextStyle(color: Colors.red),
-                ),
-              SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _login,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text('Login'),
+              const SizedBox(height: 20),
+              
+              // Link ke Halaman Daftar
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HalamanDaftar()),
+                  );
+                },
+                child: Text('Belum punya akun? Register disini'),
               ),
             ],
           ),

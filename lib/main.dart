@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:projek_uas_kel2/firebase_options.dart';
 import 'halaman_login.dart';
 import 'halaman_daftar.dart';
+import 'halaman_home.dart';
+import 'dashboard_nasabah.dart';
 
 void main() async{
 await Firebase.initializeApp(
@@ -24,7 +26,7 @@ class MyApp extends StatelessWidget {
         
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: HalamanDaftar(),
+      home: DashboardNasabah(),
     );
   }
 }
