@@ -12,11 +12,11 @@ class HalamanDaftar extends StatefulWidget {
 
 class _HalamanDaftarState extends State<HalamanDaftar> {
   final _formKey = GlobalKey<FormState>();
-  final _namaController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _noHpController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+  final _namaController = TextEditingController(text: "nama");
+  final _emailController = TextEditingController(text: "nama@email.com");
+  final _noHpController = TextEditingController(text: "99999");
+  final _passwordController = TextEditingController(text: "11111111");
+  final _confirmPasswordController = TextEditingController(text: "11111111");
   String _userType = 'Nasabah';
   bool _isLoading = false;
 
@@ -37,6 +37,7 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      print(credential.user?.email .toString());
 
       // Simpan data user ke Firestore
       await FirebaseFirestore.instance
@@ -60,6 +61,7 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
         SnackBar(content: Text('Registrasi berhasil! Silakan login')),
       );
     } on FirebaseAuthException catch (e) {
+      print(e.toString());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message ?? 'Registrasi gagal')),
       );

@@ -7,6 +7,7 @@ import 'halaman_home.dart';
 import 'dashboard_nasabah.dart';
 
 void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
 await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
 );
@@ -26,7 +27,7 @@ class MyApp extends StatelessWidget {
         
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: DashboardNasabah(),
+      home: HalamanLogin(),
     );
   }
 }
