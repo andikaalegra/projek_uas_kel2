@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dashboard_admin.dart';
-import 'dashboard_nasabah.dart';
+import 'admin/dashboard_admin.dart';
+import 'nasabah/dashboard_nasabah.dart';
 import 'halaman_daftar.dart';
 
 class HalamanLogin extends StatefulWidget {

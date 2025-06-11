@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'halaman_login.dart';
+import '../halaman_login.dart';
 
 class DashboardNasabah extends StatelessWidget {
   const DashboardNasabah({Key? key}) : super(key: key);
