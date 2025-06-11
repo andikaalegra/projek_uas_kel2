@@ -22,8 +22,16 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
   String _role = 'Nasabah';
   bool _isLoading = false;
 
+  // Daftar email yang boleh menjadi admin
+  final List<String> allowedAdminEmails = [
+    'andika@gmail.com',
+    'admin2@gmail.com',
+    'admin3@gmail.com',
+  ];
+
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
+
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Password dan konfirmasi tidak sama')),
@@ -31,16 +39,23 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
       return;
     }
 
+    // Cegah pendaftaran admin jika email tidak termasuk dalam whitelist
+    if (_role == 'Admin' &&
+        !allowedAdminEmails.contains(_emailController.text.trim())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Email ini tidak diizinkan menjadi Admin')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      // 🔐 1. Buat akun di Firebase Auth
       final credential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      // 🧾 2. Simpan data ke Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(credential.user!.uid)
@@ -52,7 +67,6 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // 🎯 3. Navigasi ke dashboard sesuai role
       if (_role == 'Admin') {
         Navigator.pushReplacement(
           context,
@@ -100,7 +114,6 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
               ),
               const SizedBox(height: 20),
 
-              // Nama
               TextFormField(
                 controller: _namaController,
                 decoration: InputDecoration(
@@ -113,7 +126,6 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
               ),
               const SizedBox(height: 15),
 
-              // Email
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
@@ -126,7 +138,6 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
               ),
               const SizedBox(height: 15),
 
-              // Nomor HP
               TextFormField(
                 controller: _noHpController,
                 decoration: InputDecoration(
@@ -139,7 +150,6 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
               ),
               const SizedBox(height: 15),
 
-              // Password
               TextFormField(
                 controller: _passwordController,
                 decoration: InputDecoration(
@@ -153,7 +163,6 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
               ),
               const SizedBox(height: 15),
 
-              // Konfirmasi Password
               TextFormField(
                 controller: _confirmPasswordController,
                 decoration: InputDecoration(
@@ -166,7 +175,6 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
               ),
               const SizedBox(height: 15),
 
-              // Role Dropdown
               DropdownButtonFormField<String>(
                 value: _role,
                 items: ['Admin', 'Nasabah']
@@ -181,7 +189,6 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
               ),
               const SizedBox(height: 25),
 
-              // Tombol Register
               ElevatedButton(
                 onPressed: _isLoading ? null : _register,
                 child: _isLoading
@@ -189,7 +196,6 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
                     : Text("Daftar"),
               ),
 
-              // Link ke Login
               TextButton(
                 onPressed: () {
                   Navigator.pushReplacement(
