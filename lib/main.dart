@@ -1,9 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:projek_uas_kel2/daftar_nasabah.dart';
 import 'package:projek_uas_kel2/firebase_options.dart';
 import 'halaman_login.dart';
 import 'halaman_daftar.dart';
-import 'halaman_home.dart';
+import 'dashboard_admin.dart';
 import 'dashboard_nasabah.dart';
 
 void main() async{
@@ -26,7 +27,7 @@ class MyApp extends StatelessWidget {
         
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: HalamanLogin(),
+      home:DashboardNasabah(),
     );
   }
 }

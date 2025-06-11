@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dashboard_admin.dart';
 import 'dashboard_nasabah.dart';
 import 'halaman_daftar.dart';
 
 class HalamanLogin extends StatefulWidget {
-  const HalamanLogin({Key? key}) : super(key: key);
+  const HalamanLogin({super.key});
 
   @override
-  _HalamanLoginState createState() => _HalamanLoginState();
+  State<HalamanLogin> createState() => _HalamanLoginState();
 }
 
 class _HalamanLoginState extends State<HalamanLogin> {
@@ -18,21 +20,35 @@ class _HalamanLoginState extends State<HalamanLogin> {
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
+
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      // 1. Login dengan Firebase Auth
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => DashboardNasabah()),
-      );
-    } on FirebaseAuthException catch (e) {
+
+      // 2. Ambil UID dan dokumen Firestore
+      final uid = credential.user!.uid;
+      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final data = doc.data();
+
+      // 3. Ambil role dari field 'role' atau 'userType'
+      final role = data?['role'] ?? data?['userType'];
+
+      if (role == 'Admin') {
+        Navigator.pushReplacement(context,
+          MaterialPageRoute(builder: (_) => DashboardAdmin()));
+      } else if (role == 'Nasabah') {
+        Navigator.pushReplacement(context,
+          MaterialPageRoute(builder: (_) => DashboardNasabah()));
+      } else {
+        throw Exception('Peran pengguna tidak diketahui.');
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Login gagal')),
+        SnackBar(content: Text('Gagal login: $e')),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -50,74 +66,50 @@ class _HalamanLoginState extends State<HalamanLogin> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: ListView(
             children: [
-              // Logo Bank Sampah
+              const SizedBox(height: 80),
               const Text(
                 'BANK SAMPAH',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
-              
-              // Email/Username
+
               TextFormField(
                 controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email/Username',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Harap masukkan email/username';
-                  }
-                  return null;
-                },
+                decoration: InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+                validator: (val) => val == null || val.isEmpty ? 'Masukkan email' : null,
               ),
-              const SizedBox(height: 20),
-              
-              // Password
+              const SizedBox(height: 15),
+
               TextFormField(
                 controller: _passwordController,
+                decoration: InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
                 obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Harap masukkan password';
-                  }
-                  return null;
-                },
+                validator: (val) => val == null || val.isEmpty ? 'Masukkan password' : null,
               ),
-              const SizedBox(height: 30),
-              
-              // Tombol Login
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _login,
-                  child: _isLoading 
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : Text('Login'),
-                ),
+              const SizedBox(height: 25),
+
+              ElevatedButton(
+                onPressed: _isLoading ? null : _login,
+                child: _isLoading
+                    ? CircularProgressIndicator(color: Colors.white)
+                    : Text("Login"),
               ),
-              const SizedBox(height: 20),
-              
-              // Link ke Halaman Daftar
+
               TextButton(
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => HalamanDaftar()),
+                    MaterialPageRoute(builder: (_) => HalamanDaftar()),
                   );
                 },
-                child: Text('Belum punya akun? Register disini'),
-              ),
+                child: Text('Belum punya akun? Daftar di sini'),
+              )
             ],
           ),
         ),
