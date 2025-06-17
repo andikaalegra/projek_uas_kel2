@@ -7,44 +7,50 @@ class DashboardAdmin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: const Color(0xFFE8F5E9), // Light green background
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text('Dashboard Admin'),
         centerTitle: true,
-        backgroundColor: Colors.black,
+        backgroundColor: const Color(0xFF2E7D32), // Dark green
         foregroundColor: Colors.white,
+        elevation: 4,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
           child: Column(
             children: [
               _buildCard(Icons.group, "Nasabah", "3"),
+              const SizedBox(height: 16),
               _buildCard(Icons.recycling, "Sampah", "1,22 Ton\n1.220,00 Kg"),
-              _buildCard(Icons.attach_money, "Saldo", "30.25 Juta\nRp 30.250.000,-"),
-              _buildCard(Icons.delete_outline, "Kategori", "Organik : 15 Kg\nAnorganik : 20 Kg"),
-              const SizedBox(height: 20),
-              ElevatedButton(
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Colors.black,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8),
-    ),
-  ),
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const DaftarNasabah()),
-    );
-  },
-  child: const Text("Daftar Nasabah", style: TextStyle(color: Colors.white)),
-),
-
+              const SizedBox(height: 16),
+              _buildCard(Icons.attach_money, "Saldo", "Rp 30.250.000,-"),
+              const SizedBox(height: 16),
+              _buildCard(Icons.delete_outline, "Kategori", "Organik: 15 Kg\nAnorganik: 20 Kg"),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E7D32),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.list_alt, color: Colors.white),
+                  label: const Text(
+                    "Daftar Nasabah",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const DaftarNasabah()),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),
@@ -53,28 +59,39 @@ class DashboardAdmin extends StatelessWidget {
   }
 
   Widget _buildCard(IconData icon, String title, String content) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Icon(icon, size: 40, color: Colors.black),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(content, style: const TextStyle(fontSize: 14)),
-                ],
-              ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 40, color: Colors.green[800]),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style:
+                      const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(content, style: const TextStyle(fontSize: 14)),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

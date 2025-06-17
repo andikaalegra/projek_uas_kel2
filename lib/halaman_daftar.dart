@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin/dashboard_admin.dart';
 import 'nasabah/dashboard_nasabah.dart';
 import 'halaman_login.dart';
+import 'admin/daftar_nasabah.dart';
 
 class HalamanDaftar extends StatefulWidget {
   const HalamanDaftar({Key? key}) : super(key: key);
@@ -22,70 +23,75 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
   String _role = 'Nasabah';
   bool _isLoading = false;
 
-  // Daftar email yang boleh menjadi admin
   final List<String> allowedAdminEmails = [
     'andika@gmail.com',
     'admin2@gmail.com',
     'admin3@gmail.com',
   ];
 
-  Future<void> _register() async {
-    if (!_formKey.currentState!.validate()) return;
+Future<void> _register() async {
+  if (!_formKey.currentState!.validate()) return;
 
-    if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Password dan konfirmasi tidak sama')),
-      );
-      return;
-    }
+  if (_passwordController.text != _confirmPasswordController.text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Password dan konfirmasi tidak sama')),
+    );
+    return;
+  }
 
-    // Cegah pendaftaran admin jika email tidak termasuk dalam whitelist
-    if (_role == 'Admin' &&
-        !allowedAdminEmails.contains(_emailController.text.trim())) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Email ini tidak diizinkan menjadi Admin')),
-      );
-      return;
-    }
+  if (_role == 'Admin' && !allowedAdminEmails.contains(_emailController.text.trim())) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Email ini tidak diizinkan menjadi Admin')),
+    );
+    return;
+  }
 
-    setState(() => _isLoading = true);
-    try {
-      final credential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+  setState(() => _isLoading = true);
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(credential.user!.uid)
-          .set({
+  try {
+    final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+
+    final uid = credential.user!.uid;
+
+    // Simpan data umum ke koleksi 'users'
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'nama': _namaController.text.trim(),
+      'email': _emailController.text.trim(),
+      'noHp': _noHpController.text.trim(),
+      'role': _role,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // Simpan data ke koleksi 'nasabah' jika perannya Nasabah
+    if (_role == 'Nasabah') {
+      await FirebaseFirestore.instance.collection('nasabah').doc(uid).set({
         'nama': _namaController.text.trim(),
-        'email': _emailController.text.trim(),
-        'noHp': _noHpController.text.trim(),
-        'role': _role,
-        'createdAt': FieldValue.serverTimestamp(),
+        'id': 'N-${uid.substring(0, 4).toUpperCase()}',
+        'tanggal_daftar': Timestamp.now(),
+        'saldo': 0,
       });
 
-      if (_role == 'Admin') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => DashboardAdmin()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => DashboardNasabah()),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal daftar: $e')),
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DaftarNasabah()),
       );
-    } finally {
-      setState(() => _isLoading = false);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardAdmin()),
+      );
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Gagal daftar: $e')),
+    );
+  } finally {
+    setState(() => _isLoading = false);
   }
+}
 
   @override
   void dispose() {
@@ -100,7 +106,7 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Daftar Akun")),
+      appBar: AppBar(title: const Text("Daftar Akun")),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Form(
@@ -116,19 +122,18 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
 
               TextFormField(
                 controller: _namaController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Nama',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Masukkan nama lengkap'
-                    : null,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Masukkan nama lengkap' : null,
               ),
               const SizedBox(height: 15),
 
               TextFormField(
                 controller: _emailController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Email',
                   border: OutlineInputBorder(),
                 ),
@@ -140,7 +145,7 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
 
               TextFormField(
                 controller: _noHpController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Nomor HP',
                   border: OutlineInputBorder(),
                 ),
@@ -152,20 +157,19 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
 
               TextFormField(
                 controller: _passwordController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Password',
                   border: OutlineInputBorder(),
                 ),
                 obscureText: true,
-                validator: (value) => value != null && value.length < 6
-                    ? 'Minimal 6 karakter'
-                    : null,
+                validator: (value) =>
+                    value != null && value.length < 6 ? 'Minimal 6 karakter' : null,
               ),
               const SizedBox(height: 15),
 
               TextFormField(
                 controller: _confirmPasswordController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Konfirmasi Password',
                   border: OutlineInputBorder(),
                 ),
@@ -178,11 +182,10 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
               DropdownButtonFormField<String>(
                 value: _role,
                 items: ['Admin', 'Nasabah']
-                    .map((role) =>
-                        DropdownMenuItem(value: role, child: Text(role)))
+                    .map((role) => DropdownMenuItem(value: role, child: Text(role)))
                     .toList(),
                 onChanged: (val) => setState(() => _role = val!),
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Daftar sebagai',
                   border: OutlineInputBorder(),
                 ),
@@ -192,19 +195,19 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
               ElevatedButton(
                 onPressed: _isLoading ? null : _register,
                 child: _isLoading
-                    ? CircularProgressIndicator(color: Colors.white)
-                    : Text("Daftar"),
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("Daftar"),
               ),
 
               TextButton(
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => HalamanLogin()),
+                    MaterialPageRoute(builder: (_) => const HalamanLogin()),
                   );
                 },
-                child: Text('Sudah punya akun? Login di sini'),
-              )
+                child: const Text('Sudah punya akun? Login di sini'),
+              ),
             ],
           ),
         ),

@@ -23,29 +23,35 @@ class _HalamanLoginState extends State<HalamanLogin> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Login dengan Firebase Auth
       final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      // 2. Ambil UID dan dokumen Firestore
       final uid = credential.user!.uid;
       final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final data = doc.data();
 
-      // 3. Ambil role dari field 'role' atau 'userType'
+      if (!doc.exists) {
+        throw Exception('Data pengguna tidak ditemukan.');
+      }
+
+      final data = doc.data();
       final role = data?['role'] ?? data?['userType'];
 
       if (role == 'Admin') {
-        Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (_) => DashboardAdmin()));
+        Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => DashboardAdmin()));
       } else if (role == 'Nasabah') {
-        Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (_) => DashboardNasabah()));
+        Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => DashboardNasabah()));
       } else {
         throw Exception('Peran pengguna tidak diketahui.');
       }
+    } on FirebaseAuthException catch (e) {
+      String msg = 'Login gagal';
+      if (e.code == 'user-not-found') msg = 'Email tidak ditemukan';
+      else if (e.code == 'wrong-password') msg = 'Password salah';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal login: $e')),
@@ -65,52 +71,109 @@ class _HalamanLoginState extends State<HalamanLogin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              const SizedBox(height: 80),
-              const Text(
-                'BANK SAMPAH',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF4CAF50), Color(0xFF81C784)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.95),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
-              const SizedBox(height: 30),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.account_circle, size: 80, color: Colors.green),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'BANK SAMPAH',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
 
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
-                validator: (val) => val == null || val.isEmpty ? 'Masukkan email' : null,
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'Masukkan email';
+                        if (!val.contains('@')) return 'Format email tidak valid';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 15),
+
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: Icon(Icons.lock),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (val) =>
+                          val == null || val.isEmpty ? 'Masukkan password' : null,
+                    ),
+                    const SizedBox(height: 25),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: _isLoading ? null : _login,
+                        child: _isLoading
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text("Login", style: TextStyle(fontSize: 16)),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => HalamanDaftar()),
+                        );
+                      },
+                      child: const Text(
+                        'Belum punya akun? Daftar di sini',
+                        style: TextStyle(color: Colors.green),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 15),
-
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
-                obscureText: true,
-                validator: (val) => val == null || val.isEmpty ? 'Masukkan password' : null,
-              ),
-              const SizedBox(height: 25),
-
-              ElevatedButton(
-                onPressed: _isLoading ? null : _login,
-                child: _isLoading
-                    ? CircularProgressIndicator(color: Colors.white)
-                    : Text("Login"),
-              ),
-
-              TextButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => HalamanDaftar()),
-                  );
-                },
-                child: Text('Belum punya akun? Daftar di sini'),
-              )
-            ],
+            ),
           ),
         ),
       ),
