@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class TambahSetoran extends StatefulWidget {
-  const TambahSetoran({super.key});
+  final String namaNasabah;
+
+  const TambahSetoran({super.key, required this.namaNasabah});
 
   @override
   State<TambahSetoran> createState() => _TambahSetoranState();
@@ -40,6 +44,52 @@ class _TambahSetoranState extends State<TambahSetoran> {
     });
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final now = DateTime.now();
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 1),
+    );
+
+    if (pickedDate != null) {
+      String formattedDate = DateFormat('dd MMMM yyyy').format(pickedDate);
+      setState(() {
+        tanggalController.text = formattedDate;
+      });
+    }
+  }
+
+  Future<void> _simpanKeFirestore() async {
+    final berat = int.tryParse(beratController.text) ?? 0;
+    final pendapatan = berat * hargaPerKg;
+
+    try {
+      await FirebaseFirestore.instance.collection('setoran').add({
+        'nama': widget.namaNasabah,
+        'kategori': selectedKategori,
+        'berat': berat,
+        'pendapatan': pendapatan,
+        'tanggalSetor':
+            DateFormat('dd MMMM yyyy').parse(tanggalController.text),
+        'alamat': alamatController.text,
+        'catatan': catatanController.text,
+        'status': 'Sudah di Konfirmasi',
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Setoran berhasil disimpan')),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menyimpan: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,22 +116,10 @@ class _TambahSetoranState extends State<TambahSetoran> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: const [
-                  Icon(Icons.info, color: Colors.black),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Mohon isi data di bawah ini dengan benar',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
               _buildInputLabel("Nama Pengguna"),
               const SizedBox(height: 4),
-              const Text("Andika", style: TextStyle(fontSize: 16)),
+              Text(widget.namaNasabah,
+                  style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 16),
 
               _buildInputLabel("Kategori Sampah"),
@@ -163,11 +201,13 @@ class _TambahSetoranState extends State<TambahSetoran> {
               const SizedBox(height: 4),
               TextField(
                 controller: tanggalController,
+                readOnly: true,
+                onTap: () => _selectDate(context),
                 decoration: const InputDecoration(
-                  hintText: 'Masukkan tanggal',
+                  hintText: 'Pilih tanggal',
                   border: OutlineInputBorder(),
+                  suffixIcon: Icon(Icons.calendar_today),
                 ),
-                keyboardType: TextInputType.datetime,
               ),
               const SizedBox(height: 16),
 
@@ -196,7 +236,14 @@ class _TambahSetoranState extends State<TambahSetoran> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Aksi setor
+                    if (beratController.text.isEmpty ||
+                        tanggalController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Berat dan Tanggal harus diisi')),
+                      );
+                      return;
+                    }
+                    _simpanKeFirestore();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,

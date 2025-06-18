@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'tambah_setoran.dart';
 
 class DaftarNasabah extends StatelessWidget {
@@ -19,14 +21,65 @@ class DaftarNasabah extends StatelessWidget {
         elevation: 0,
         foregroundColor: Colors.black,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: List.generate(3, (index) => _buildNasabahCard(context)),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .where('role', isEqualTo: 'Nasabah')
+            .snapshots(), // Tanpa orderBy agar aman dari error
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(child: Text('Terjadi kesalahan saat memuat data.'));
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final nasabahList = snapshot.data!.docs;
+
+          if (nasabahList.isEmpty) {
+            return const Center(child: Text('Belum ada nasabah terdaftar.'));
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: nasabahList.length,
+            itemBuilder: (context, index) {
+              final nasabah = nasabahList[index];
+              final data = nasabah.data() as Map<String, dynamic>;
+
+              final nama = data['nama'] ?? 'Tanpa Nama';
+              final saldo = data['saldo'] ?? 0;
+              final createdAt = data['createdAt'];
+              final idShort = nasabah.id.substring(0, 5).toUpperCase();
+
+              String tanggalFormatted = '-';
+              if (createdAt != null && createdAt is Timestamp) {
+                tanggalFormatted =
+                    DateFormat('d MMMM yyyy').format(createdAt.toDate());
+              }
+
+              return _buildNasabahCard(
+                context,
+                nama: nama,
+                saldo: saldo,
+                tanggal: tanggalFormatted,
+                id: idShort,
+              );
+            },
+          );
+        },
       ),
     );
   }
 
-  Widget _buildNasabahCard(BuildContext context) {
+  Widget _buildNasabahCard(
+    BuildContext context, {
+    required String nama,
+    required int saldo,
+    required String tanggal,
+    required String id,
+  }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -34,29 +87,36 @@ class DaftarNasabah extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [ 
+          children: [
             const Icon(Icons.person, size: 40),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [ 
-                  const Text('Andika', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const Text('ID: N-001'),
-                  const Text('Terdaftar, 3 Juni 2025'),
+                children: [
+                  Text(nama,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('ID: N-$id'),
+                  Text('Terdaftar, $tanggal'),
                   const SizedBox(height: 8),
                   const Text('Saldo Saat Ini:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
-                  const Text('Rp 0,00', style: TextStyle(color: Colors.black)),
+                  Text(
+                    'Rp ${NumberFormat("#,##0", "id_ID").format(saldo)}',
+                    style: const TextStyle(color: Colors.black),
+                  ),
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerRight,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                         Navigator.push(
+                        Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const TambahSetoran()),
-                          );
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                TambahSetoran(namaNasabah: nama),
+                          ),
+                        );
                       },
                       icon: const Icon(Icons.arrow_forward),
                       label: const Text('Tambah Setoran'),
@@ -68,7 +128,8 @@ class DaftarNasabah extends StatelessWidget {
                           side: const BorderSide(color: Colors.black),
                         ),
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
                       ),
                     ),
                   )

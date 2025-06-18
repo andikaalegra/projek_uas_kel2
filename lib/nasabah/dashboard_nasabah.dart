@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../halaman_login.dart';
+import 'halaman_transaksi.dart';
+import 'profil_nasabah.dart';
 
 class DashboardNasabah extends StatelessWidget {
   const DashboardNasabah({Key? key}) : super(key: key);
@@ -9,7 +11,7 @@ class DashboardNasabah extends StatelessWidget {
     await FirebaseAuth.instance.signOut();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HalamanLogin()),
+      MaterialPageRoute(builder: (context) => const HalamanLogin()),
     );
   }
 
@@ -52,7 +54,7 @@ class DashboardNasabah extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // Box ajakan & icon
+                // Box ajakan
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -61,7 +63,6 @@ class DashboardNasabah extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      // Icon sampah
                       const Icon(
                         Icons.delete,
                         size: 60,
@@ -102,7 +103,12 @@ class DashboardNasabah extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      // Aksi transaksi
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HalamanTransaksi(),
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -113,7 +119,7 @@ class DashboardNasabah extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.person),
-                    label: const Text('Profile'),
+                    label: const Text('Profil'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       shape: RoundedRectangleBorder(
@@ -121,7 +127,12 @@ class DashboardNasabah extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      // Aksi profile
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProfilNasabah(),
+                        ),
+                      );
                     },
                   ),
                 ),

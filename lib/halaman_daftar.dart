@@ -19,10 +19,9 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
   final _noHpController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  String _role = 'Nasabah';
   bool _isLoading = false;
 
-  // Daftar email yang boleh menjadi admin
+  // Daftar email yang diizinkan sebagai admin
   final List<String> allowedAdminEmails = [
     'andika@gmail.com',
     'admin2@gmail.com',
@@ -39,23 +38,21 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
       return;
     }
 
-    // Cegah pendaftaran admin jika email tidak termasuk dalam whitelist
-    if (_role == 'Admin' &&
-        !allowedAdminEmails.contains(_emailController.text.trim())) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Email ini tidak diizinkan menjadi Admin')),
-      );
-      return;
-    }
-
     setState(() => _isLoading = true);
     try {
+      // Buat akun di Firebase Auth
       final credential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
+      // Tentukan role berdasarkan email
+      String assignedRole = allowedAdminEmails.contains(_emailController.text.trim())
+          ? 'Admin'
+          : 'Nasabah';
+
+      // Simpan ke Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(credential.user!.uid)
@@ -63,11 +60,12 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
         'nama': _namaController.text.trim(),
         'email': _emailController.text.trim(),
         'noHp': _noHpController.text.trim(),
-        'role': _role,
+        'role': assignedRole,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      if (_role == 'Admin') {
+      // Arahkan ke dashboard sesuai role
+      if (assignedRole == 'Admin') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => DashboardAdmin()),
@@ -172,20 +170,6 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
                 obscureText: true,
                 validator: (value) =>
                     value == null || value.isEmpty ? 'Wajib konfirmasi password' : null,
-              ),
-              const SizedBox(height: 15),
-
-              DropdownButtonFormField<String>(
-                value: _role,
-                items: ['Admin', 'Nasabah']
-                    .map((role) =>
-                        DropdownMenuItem(value: role, child: Text(role)))
-                    .toList(),
-                onChanged: (val) => setState(() => _role = val!),
-                decoration: InputDecoration(
-                  labelText: 'Daftar sebagai',
-                  border: OutlineInputBorder(),
-                ),
               ),
               const SizedBox(height: 25),
 
