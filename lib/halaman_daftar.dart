@@ -52,7 +52,7 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
           ? 'Admin'
           : 'Nasabah';
 
-      // Simpan ke Firestore
+      // Simpan ke Firestore (tambahkan field saldo: 0)
       await FirebaseFirestore.instance
           .collection('users')
           .doc(credential.user!.uid)
@@ -61,6 +61,7 @@ class _HalamanDaftarState extends State<HalamanDaftar> {
         'email': _emailController.text.trim(),
         'noHp': _noHpController.text.trim(),
         'role': assignedRole,
+        'saldo': 0, // 👈 FIXED: Tambahkan saldo default
         'createdAt': FieldValue.serverTimestamp(),
       });
 
